@@ -1,0 +1,129 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+public class Car {
+    private int speed;
+    private String direction;
+    private String color;
+
+    public Car(int speed, String direction, String color) {
+        this.speed = speed;
+        this.direction = direction;
+        this.color = color;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void accelerate(int amount) {
+        speed += amount;
+    }
+
+    public void brake(int amount) {
+        speed = Math.max(0, speed - amount);
+    }
+
+    public String getDirection() {
+        return direction;
+    }
+
+    public String getColor() {
+        return color;
+    }
+}
+
+public class TrafficLight {
+    private boolean isGreen;
+
+    public TrafficLight() {
+        isGreen = false; // Initialize traffic light to red
+    }
+
+    public boolean isGreen() {
+        return isGreen;
+    }
+
+    public void setGreen(boolean isGreen) {
+        this.isGreen = isGreen;
+    }
+}
+
+public class IntersectionSimulator {
+    private static final int NUM_CARS = 20;
+    private static final int MAX_SPEED = 80; // km/h
+    private static final int MIN_SPEED = 20; // km/h
+    private static final int SIMULATION_TIME_SECONDS = 60;
+    private static final int GREEN_TIME_SECONDS = 10; // Green light duration for each direction
+
+    public static void main(String[] args) {
+        TrafficLight trafficLight = new TrafficLight();
+        Random rand = new Random();
+        long startTime = System.currentTimeMillis();
+
+        // Create cars with random speeds, directions, and colors
+        Car[] cars = new Car[NUM_CARS];
+        String[] directions = {"N", "S", "E", "W"};
+        String[] colors = {"Red", "Green", "Blue", "Orange", "Pink"};
+        Map<String, Integer> carCountPerDirection = new HashMap<>();
+        Map<String, Integer> carCountPerColor = new HashMap<>();
+
+        for (int i = 0; i < NUM_CARS; i++) {
+            int speed = rand.nextInt(MAX_SPEED - MIN_SPEED + 1) + MIN_SPEED;
+            String direction = directions[rand.nextInt(directions.length)];
+            String color = colors[rand.nextInt(colors.length)];
+            cars[i] = new Car(speed, direction, color);
+
+            // Count cars per direction
+            carCountPerDirection.put(direction, carCountPerDirection.getOrDefault(direction, 0) + 1);
+
+            // Count cars per color
+            carCountPerColor.put(color, carCountPerColor.getOrDefault(color, 0) + 1);
+        }
+
+        // Simulate the intersection for 1 minute (60 seconds)
+        while ((System.currentTimeMillis() - startTime) / 1000 < SIMULATION_TIME_SECONDS) {
+            int time = (int) ((System.currentTimeMillis() - startTime) / 1000) + 1;
+            System.out.println("Time: " + time + " seconds");
+
+            // Cycle through all directions for the green light
+            for (String greenDirection : directions) {
+                System.out.println("Traffic light is green for: " + greenDirection);
+                trafficLight.setGreen(true);
+
+                // Simulate car movements and update traffic light for the green direction
+                for (Car car : cars) {
+                    if (car.getDirection().equals(greenDirection)) {
+                        car.accelerate(5); // Example: Car accelerates by 5 km/h each second
+                        System.out.println("Car going " + car.getDirection() + " with speed " + car.getSpeed() + " km/h, Color: " + car.getColor());
+                    } else {
+                        car.brake(10); // Example: Car slows down by 10 km/h each second when waiting at a red light
+                        System.out.println("Car waiting at red light: " + car.getDirection() + ", Color: " + car.getColor());
+                    }
+                }
+
+                // Wait for the specified green time
+                try {
+                    Thread.sleep(GREEN_TIME_SECONDS * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                trafficLight.setGreen(false); // Set the traffic light back to red
+                System.out.println("------------------");
+            }
+        }
+
+        // Generate the report
+        System.out.println("Car count per direction:");
+        for (String direction : carCountPerDirection.keySet()) {
+            System.out.println(direction + ": " + carCountPerDirection.get(direction) + " cars");
+        }
+
+        System.out.println("\nCar count per color:");
+        for (String color : carCountPerColor.keySet()) {
+            System.out.println(color + ": " + carCountPerColor.get(color) + " cars");
+        }
+    }
+}
